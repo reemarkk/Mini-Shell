@@ -7,17 +7,32 @@
 
 int main(){
     std::string input; // to store command line
+    std::vector<char*> history;
 
     while(true){
         // getting command line
         std::cout<<"Mini shell> "<<std::flush;
         if(!std::getline(std::cin, input)) break;
-        if(input.empty()) continue;
+        //if(input.empty()) continue;
+
+        
+        if(!input.empty()){
+            history.push_back(strdup(input.c_str()));
+        }
+        else continue;
+
+        if(input == "history"){
+            for(size_t i = 0; i < history.size(); ++i){
+                std::cout<<i+1<<" "<<history[i]<<std::endl;
+            }
+            continue;
+        }
+            
 
         // to tokenize the shell
         std::istringstream iss(input);
         std::vector<char*> args;
-        std::string token;
+        std::string token; 
 
         while( iss >> token ){
             // C-style string for execvp
@@ -26,7 +41,7 @@ int main(){
             args.push_back(temp);
         }
         args.push_back(nullptr);
-
+ 
         // child process for execute
         pid_t p_id = fork();
 
