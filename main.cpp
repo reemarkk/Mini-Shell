@@ -13,9 +13,8 @@ int main(){
 
     while(true){
         // getting command line
-        std::cout<<"Mini shell> "<<std::flush;
+        std::cout<<"\033[36mMini shell> \033[0m"<<std::flush;
         if(!std::getline(std::cin, input)) break;
-
         
         if(!input.empty()){
             history.push_back(strdup(input.c_str()));
@@ -43,21 +42,22 @@ int main(){
         if(tokenslist[0]=="exit") break;
         else if(tokenslist[0]=="cd"){
             if(tokenslist.size()<2){
-                std::cerr<<"cd: missing argument"<<std::endl;
+                std::cerr<<"\33[31mcd: missing argument\033[0m"<<std::endl;
             }
             else {if(chdir(tokenslist[1].c_str()) != 0){
-                perror("cd failed");
+               perror("\033[31mcd failed\033[0m");
             }
         }
         continue;
     }
     else if(tokenslist[0] == "mkdir"){
         if(tokenslist.size()<2){
-            std::cerr<<"mkdir: missing directory name "<<std::endl;
+            std::cerr<<"\033[31mmkdir: missing directory name\033[0m "<<std::endl;
         }
         else {
             if(mkdir(tokenslist[1].c_str(), 0755) != 0){
-                perror("mkdir failed");
+                perror("\033[31mmkdir failed\033[0m");
+
             }
         }
     }
@@ -82,14 +82,14 @@ int main(){
 
         if(!p_id){
             execvp(args[0], args.data());
-            perror("Failed");
+            perror("\033[31mexecvp failed\033[0m");
             exit(1);
         }
         else if(p_id > 0){
             wait(nullptr);
         }
         else {
-            perror("Faled");
+           perror("\033[31mexecvp failed\033[0m");
         }
         // free memory
         for(size_t i = 0; i < args.size() - 1; ++i) {
