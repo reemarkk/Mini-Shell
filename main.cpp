@@ -6,11 +6,44 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fstream>
+
+
+void SaveToTheFile(const std::vector<char*> &history){
+    // this function saves the history to a file 
+    std::ofstream out("historyFile.txt", std::ios::out | std::ios::trunc);
+    if(!out){
+        std::cerr<<"\033[31mError opening history file\033[0m"<<std::endl;
+        return;
+    }
+    for(const auto &cmd : history){
+        out<<cmd<<std::endl;
+    }
+    out.close();
+}
+
+void LoadFromFile(std::vector<char*> &history){
+    // this function loads the history from a file
+    std::ifstream in("historyFile.txt");
+    if(!in){
+        std::cerr<<"\033[31mError opening history file\033[0m"<<std::endl;
+        return;
+    }
+   std::string line;
+    while(std::getline(in, line)){
+        if(!line.empty())
+            history.push_back(strdup(line.c_str()));
+    }
+    in.close();
+}
 
 
 int main(){
     std::string input; // to store command line
     std::vector<char*> history;
+    // create file if not exists
+    std::ofstream outfile("historyFile.txt", std::ios::app);
+    LoadFromFile(history);
 
     while(true){
         // getting command line
@@ -125,7 +158,7 @@ int main(){
             delete [] args[i];
         }
         args.clear();
-
+        SaveToTheFile(history);
     }
     return 0;
 }
