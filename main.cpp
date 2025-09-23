@@ -4,6 +4,8 @@
 #include <sstream>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 int main(){
     std::string input; // to store command line
@@ -13,7 +15,6 @@ int main(){
         // getting command line
         std::cout<<"Mini shell> "<<std::flush;
         if(!std::getline(std::cin, input)) break;
-        //if(input.empty()) continue;
 
         
         if(!input.empty()){
@@ -27,20 +28,54 @@ int main(){
             }
             continue;
         }
-            
+        
 
+        // ------ Built-in commands ------
         // to tokenize the shell
         std::istringstream iss(input);
         std::vector<char*> args;
-        std::string token; 
+        std::string token;
+        std::vector<std::string> tokenslist; 
 
-        while( iss >> token ){
-            // C-style string for execvp
-            char* temp = new char[token.size()+1];
-            std::strcpy(temp, token.c_str()); 
-            args.push_back(temp);
+        while(iss>>token) tokenslist.push_back(token);
+
+        if(tokenslist.empty()) continue;
+        if(tokenslist[0]=="exit") break;
+        else if(tokenslist[0]=="cd"){
+            if(tokenslist.size()<2){
+                std::cerr<<"cd: missing argument"<<std::endl;
+            }
+            else {if(chdir(tokenslist[1].c_str()) != 0){
+                perror("cd failed");
+            }
         }
-        args.push_back(nullptr);
+        continue;
+    }
+    else if(tokenslist[0] == "mkdir"){
+        if(tokenslist.size()<2){
+            std::cerr<<"mkdir: missing directory name "<<std::endl;
+        }
+        else {
+            if(mkdir(tokenslist[1].c_str(), 0755) != 0){
+                perror("mkdir failed");
+            }
+        }
+    }
+    else if (tokenslist[0] == "help") {
+        std::cout << "Built-in commands:\n"
+                  << "  cd <dir>   - change directory\n"
+                  << "  exit       - exit shell\n"
+                  << "  help       - show this message\n"
+                  << "Other commands are run via execvp.\n";
+        continue;   // don’t fork
+    }
+
+    
+    //---- External commands ----
+    for(auto & t : tokenslist){
+        args.push_back(strdup(t.c_str()));
+    }
+        args.push_back(nullptr); // execvp needs null-terminated array
  
         // child process for execute
         pid_t p_id = fork();
