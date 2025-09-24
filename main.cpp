@@ -176,7 +176,18 @@ int main(){
         }
     }
     continue;
-}
+    }
+    else if( tokenslist[0] == "unset"){
+        if(tokenslist.size() < 2){
+            std::cerr<<"\033[31munset: missing variable name\033[0m"<<std::endl;
+        }
+        else {
+            if(unsetenv(tokenslist[1].c_str()) != 0){
+                perror("unsetenv failed");
+            }
+        }
+        continue;
+    }
 
     //---- External commands ----
     for(auto & t : tokenslist){
