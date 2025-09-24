@@ -37,6 +37,10 @@ void LoadFromFile(std::vector<char*> &history){
     in.close();
 }
 
+void Search(int number, const std::vector<char*> &history){
+    if(number < 1 || number > history.size()) return;
+    std::cout<<history[number-1]<<std::endl;
+}
 
 int main(){
     std::string input; // to store command line
@@ -46,8 +50,16 @@ int main(){
     LoadFromFile(history);
 
     while(true){
+
+        char* user = getenv("USER");
+        char hostname[128];
+        gethostname(hostname, sizeof(hostname));
+        char cwd[1024];
+        getcwd(cwd, sizeof(cwd));
+        std::cout<<"\033[32m"<<(user? user: ("Unknown")) <<"@"<<hostname<<"\033[0m:\033[34m"<<cwd<<"\033[0m ";
+
         // getting command line
-        std::cout<<"\033[36mMini shell> \033[0m"<<std::flush;
+        //std::cout<<"\033[36mMini shell> \033[0m"<<std::flush;
         if(!std::getline(std::cin, input)) break;
         
         if(!input.empty()){
@@ -59,6 +71,14 @@ int main(){
             for(size_t i = 0; i < history.size(); ++i){
                 std::cout<<i+1<<" "<<history[i]<<std::endl;
             }
+            continue;
+        }
+        if(input == "search"){
+            std::cout<<"Enter command number to search: "<<std::flush;
+            int num;
+            std::cin>>num;
+            std::cin.ignore();
+            Search(num, history);
             continue;
         }
 
@@ -118,10 +138,20 @@ int main(){
     //               << "Other commands are run via execvp.\n";
     //     continue;   
     // }
-    else if ( tokenslist[0] == "echo"){
-        for(auto &t : tokenslist){
-            std::cout<<t;
-        }
+   else if ( tokenslist[0] == "echo"){
+        for(size_t i = 1; i<    tokenslist.size(); ++i){
+           std::string arg = tokenslist[i];
+              if(arg[0] == '$'){
+                const char* var = getenv(arg.substr(1).c_str());
+                if(var) std::cout<<var;
+              }
+              else {
+                std::cout<<arg;
+              }
+              if(i != tokenslist.size() - 1) std::cout<<" ";
+            }
+        std::cout<<std::endl;
+        continue;
     }
     else if(tokenslist[0] == "whoami"){
         char* username = getenv("USER");
@@ -133,6 +163,32 @@ int main(){
         }
         continue;
     }
+   else if(tokenslist[0] == "set"){
+    if(tokenslist.size() < 2 || tokenslist[1].find('=') == std::string::npos){
+        std::cerr<<"\033[31mset: invalid format. Use VAR=VALUE\033[0m"<<std::endl;
+    }
+    else {
+        auto pos = tokenslist[1].find('=');
+        std::string var = tokenslist[1].substr(0, pos);
+        std::string value = tokenslist[1].substr(pos + 1);
+        if(setenv(var.c_str(), value.c_str(), 1) != 0){
+            perror("setenv failed");
+        }
+    }
+    continue;
+    }
+    else if( tokenslist[0] == "unset"){
+        if(tokenslist.size() < 2){
+            std::cerr<<"\033[31munset: missing variable name\033[0m"<<std::endl;
+        }
+        else {
+            if(unsetenv(tokenslist[1].c_str()) != 0){
+                perror("unsetenv failed");
+            }
+        }
+        continue;
+    }
+
     //---- External commands ----
     for(auto & t : tokenslist){
         args.push_back(strdup(t.c_str()));

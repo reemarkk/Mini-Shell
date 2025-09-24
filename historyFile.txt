@@ -3,3 +3,13 @@ history
 grep main main.cpp
 ls
 ls
+ls
+history
+ls
+set var = 1
+set myvar = "hello"
+set myvar="hello"
+echo $myvar
+ls
+mkdir new-file
+ls
