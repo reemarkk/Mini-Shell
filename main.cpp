@@ -41,6 +41,66 @@ void Search(int number, const std::vector<char*> &history){
     if(number < 1 || number > history.size()) return;
     std::cout<<history[number-1]<<std::endl;
 }
+void ExecuteBuildIn(const std::vector<std::string> &tokenslist){
+    if(tokenslist[0] == "cd"){
+        if(tokenslist.size()<2){
+            std::cerr<<"\33[31mcd: missing argument\033[0m"<<std::endl;
+        }
+        else {if(chdir(tokenslist[1].c_str()) != 0){
+           perror("\033[31mcd failed\033[0m");
+        }
+    }
+    }
+    else if(tokenslist[0] == "mkdir"){
+        if(tokenslist.size()<2){
+            std::cerr<<"\033[31mmkdir: missing directory name\033[0m "<<std::endl;
+        }
+        else {
+            if(mkdir(tokenslist[1].c_str(), 0755) != 0){
+                perror("\033[31mmkdir failed\033[0m");
+
+            }
+        }
+    }
+    else if(tokenslist[0] == "clear"){
+        //std::cout<<"\033[2J\033[1;1H"; // ansi escape code to clear terminal
+        pid_t p = fork();
+        if(p == 0){
+            execlp("clear", "clear", nullptr);
+            perror("\033[31mclear failed\033[0m");
+            exit(1);
+        }
+        else if(p > 0){
+            wait(nullptr);
+        }
+        else {
+            perror("\033[31mclear failed\033[0m");
+        }
+    }
+    else if( tokenslist[0] == "echo"){
+        for(size_t i = 1; i<    tokenslist.size(); ++i){
+           std::string arg = tokenslist[i];
+              if(arg[0] == '$'){
+                const char* var = getenv(arg.substr(1).c_str());
+                if(var) std::cout<<var;
+              }
+              else {
+                std::cout<<arg;
+              }
+              if(i != tokenslist.size() - 1) std::cout<<" ";
+            }
+        std::cout<<std::endl;
+    }
+    else if(tokenslist[0] == "whoami"){
+        char* username = getenv("USER");
+        if(username){
+            std::cout<<username<<std::endl;
+        }
+        else {
+            std::cerr<<"\033[31mwhoami: could not get username\033[0m"<<std::endl;
+        }
+    }
+}
 
 int main(){
     std::string input; // to store command line
@@ -81,6 +141,7 @@ int main(){
             Search(num, history);
             continue;
         }
+       
 
         // ------ Built-in commands ------
         // to tokenize the shell
@@ -130,14 +191,24 @@ int main(){
         }
         continue;
     }
-    // else if (tokenslist[0] == "help") {
-    //     std::cout << "Built-in commands:\n"
-    //               << "  cd <dir>   - change directory\n"
-    //               << "  exit       - exit shell\n"
-    //               << "  help       - show this message\n"
-    //               << "Other commands are run via execvp.\n";
-    //     continue;   
-    // }
+    else if (tokenslist[0] == "help") {
+        std::cout <<"\033[32mWelcome to Mini Shell!\033[0m\n"
+                  << "Built-in commands:\n"
+                  << "  cd <dir>   - change directory\n"
+                  << "  exit       - exit shell\n"
+                  << "  help       - show this message\n"
+                  << "  history    - show command history\n"
+                  << "  search     - search command in history by number\n"
+                  << "  mkdir <dir> - create a new directory\n"
+                  << "  clear      - clear the terminal\n"
+                  << "  echo <args> - display a line of text\n"
+                  << "  whoami     - display the current username\n"
+                  << "  set VAR=VALUE - set an environment variable\n"
+                  << "  unset VAR  - unset an environment variable\n"
+
+                  << "Other commands are run via execvp.\n";
+        continue;   
+    }
    else if ( tokenslist[0] == "echo"){
         for(size_t i = 1; i<    tokenslist.size(); ++i){
            std::string arg = tokenslist[i];

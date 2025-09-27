@@ -13,3 +13,11 @@ echo $myvar
 ls
 mkdir new-file
 ls
+ls
+ls
+ls
+history
+search
+grep main main.cpp
+hello>out.txt
+hello>historyFile.txt
