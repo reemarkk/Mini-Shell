@@ -25,3 +25,5 @@ ls
 hello>out.txt
 cd new-file || ls
 mkdir new-file
+cd new-file
+pwd
