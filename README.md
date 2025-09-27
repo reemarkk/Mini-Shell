@@ -1,7 +1,7 @@
 ## Mini Shell
 Mini Shell is a command-line interpreter written in C++ that provides basic shell functionality. It supports both built-in commands and the execution of external programs using fork and execvp, making it behave similarly to a traditional Unix shell.
 ### Features
-**Built-in Commands**
+**Built-in Commands** 
 cd <dir> – change directory
 mkdir <dir> – create a directory
 clear – clear the terminal
