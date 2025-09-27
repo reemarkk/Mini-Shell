@@ -3,29 +3,29 @@ Mini Shell is a command-line interpreter written in C++ that provides basic shel
 ### Features
 **Built-in Commands** 
 
-cd <dir> – change directory
-mkdir <dir> – create a directory
-clear – clear the terminal
-echo [args] – print text or environment variables
-whoami – show the current username
-set VAR=VALUE – set environment variables
-unset VAR – unset environment variables
-history – show command history
-search – search command history by number
-exit – quit the shell
+- cd <dir> – change directory
+- mkdir <dir> – create a directory
+- clear – clear the terminal
+- echo [args] – print text or environment variables
+- whoami – show the current username
+- set VAR=VALUE – set environment variables
+- unset VAR – unset environment variables
+- history – show command history
+- search – search command history by number
+- exit – quit the shell
 
 **Logical Operators**
 
-cmd1 && cmd2 – run the second command only if the first succeeds
-cmd1 || cmd2 – run the second command only if the first fails
+- cmd1 && cmd2 – run the second command only if the first succeeds
+- cmd1 || cmd2 – run the second command only if the first fails
 
 **External Commands**
 
-Any executable in the system PATH can be run (e.g., ls, cat, g++ main.cpp).
+- Any executable in the system PATH can be run (e.g., ls, cat, g++ main.cpp).
 
 **History Persistence**
 
-Saves history in historyFile.txt and loads it on startup.
+- Saves history in historyFile.txt and loads it on startup.
 
 **Technical Details**
 
