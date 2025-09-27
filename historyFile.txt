@@ -1,27 +1,4 @@
 ls
 history
-grep main main.cpp
-ls
-ls
-ls
-history
-ls
-set var = 1
-set myvar = "hello"
-set myvar="hello"
-echo $myvar
-ls
-mkdir new-file
-ls
-ls
-ls
-ls
-history
-search
-grep main main.cpp
-hello>out.txt
-hello>historyFile.txt
-ls
-hello>out.txt
-cd new-file || ls
-mkdir new-file
+serach
+aa
