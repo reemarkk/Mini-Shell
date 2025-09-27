@@ -8,6 +8,44 @@
 #include <sys/types.h>
 #include <fstream>
 
+#define MAX_HISTORY 100
+
+struct Command {
+    std::vector<std::string> args;
+    std::string separator; // "&&", "||""
+
+    Command(const std::vector<std::string>& a, const std::string& s) : args(a), separator(s) {}
+};
+
+// todo: handle redirections
+void handleRedirections(std::vector<std::string> &tokenslist){
+    // This function will handle input/output redirections
+    for(size_t i = 0; i<tokenslist.size();i++){
+        if(tokenslist[i] == "<"){
+            if( i+1 <tokenslist.size()){
+                freopen(tokenslist[i+1].c_str(), "r", stdin);
+                tokenslist.erase(tokenslist.begin()+i, tokenslist.begin()+i+2);
+                i--;
+            }
+            else {
+                std::cerr<<"\033[31mError: no input file specified\033[0m"<<std::endl;
+            }
+
+        }
+        if(tokenslist[i] == ">"){
+            if( i+1 <tokenslist.size()){
+                freopen(tokenslist[i+1].c_str(), "w", stdout);
+                tokenslist.erase(tokenslist.begin()+i, tokenslist.begin()+i+2);
+                i--;
+            }
+            else {
+                std::cerr<<"\033[31mError: no output file specified\033[0m"<<std::endl;
+            }
+        }
+    }
+
+
+}
 
 void SaveToTheFile(const std::vector<char*> &history){
     // this function saves the history to a file 
@@ -17,6 +55,7 @@ void SaveToTheFile(const std::vector<char*> &history){
         return;
     }
     for(const auto &cmd : history){
+        if(history.size() > MAX_HISTORY) break;
         out<<cmd<<std::endl;
     }
     out.close();
@@ -42,6 +81,78 @@ void Search(int number, const std::vector<char*> &history){
     std::cout<<history[number-1]<<std::endl;
 }
 
+std::vector<Command> ParseCommands(std::vector<std::string> &tokensList){
+    std::vector<Command> command;
+    std::vector<std::string> current; 
+
+   for(const auto &tok : tokensList){
+        if(tok == "&&" || tok == "||"){
+            command.push_back(Command(current, tok));
+            current.clear();
+        } else {
+            current.push_back(tok);
+        }
+    }
+    if(!current.empty()){
+        command.push_back(Command(current, ""));
+    }
+    return command;
+}
+
+
+int ExecuteCommand(const std::vector<char*> args){
+    
+    pid_t p_id = fork();
+
+    if(p_id == 0){
+        execvp(args[0], args.data());
+        perror("\033[31mexecvp failed\033[0m");
+        exit(1); // this means execvp failed
+    }
+    else if(p_id > 0){
+        int status = 0;
+        waitpid(p_id, &status, 0);
+        if(WIFEXITED(status))
+           return WEXITSTATUS(status); // return exit status of child
+        else return 1; // abnormal termination
+    }
+    else {
+       perror("\033[31mexecvp failed\033[0m");
+       return 1;
+       }
+    for(size_t i = 0; i < args.size() - 1; ++i) {
+        delete [] args[i];
+    }
+    return 0;
+}
+
+void ExecuteCommandsWithSep(std::vector<std::string> &tokensList){
+    auto commands = ParseCommands(tokensList);
+    int lastStatus = 0;
+
+    if(commands.empty()) return;
+
+    for(size_t i = 0; i < commands.size(); ++i){
+    
+        if(i > 0){
+            std::string sep = commands[i-1].separator;
+            if(sep == "&&" && lastStatus != 0) break;
+            if(sep == "||" && lastStatus == 0) break;
+        }
+
+        std::vector<char*> argument;
+        for(const auto &arg : commands[i].args){
+            argument.push_back(strdup(arg.c_str()));
+        }
+        argument.push_back(nullptr);
+
+        lastStatus = ExecuteCommand(argument);
+
+        argument.clear();
+        
+    }}
+
+
 int main(){
     std::string input; // to store command line
     std::vector<char*> history;
@@ -50,7 +161,6 @@ int main(){
     LoadFromFile(history);
 
     while(true){
-
         char* user = getenv("USER");
         char hostname[128];
         gethostname(hostname, sizeof(hostname));
@@ -97,10 +207,16 @@ int main(){
             if(tokenslist.size()<2){
                 std::cerr<<"\33[31mcd: missing argument\033[0m"<<std::endl;
             }
-            else {if(chdir(tokenslist[1].c_str()) != 0){
-               perror("\033[31mcd failed\033[0m");
+            else {
+                if(chdir(tokenslist[1].c_str()) != 0){
+                    perror("\033[31mcd failed\033[0m");
+                }
+                else {
+                    if(getcwd(cwd, sizeof(cwd)) != nullptr){
+                        setenv("PWD", cwd, 1);
+                    }
+                }
             }
-        }
         continue;
     }
     else if(tokenslist[0] == "mkdir"){
@@ -130,14 +246,27 @@ int main(){
         }
         continue;
     }
-    // else if (tokenslist[0] == "help") {
-    //     std::cout << "Built-in commands:\n"
-    //               << "  cd <dir>   - change directory\n"
-    //               << "  exit       - exit shell\n"
-    //               << "  help       - show this message\n"
-    //               << "Other commands are run via execvp.\n";
-    //     continue;   
-    // }
+    else if (tokenslist[0] == "help") {
+        std::cout << "Welcome to the Mini Shell!\n";
+        std::cout << "Built-in commands:\n";
+        std::cout << "  cd [dir]       Change the current directory to 'dir'\n";
+        std::cout << "  mkdir [dir]    Create a new directory named 'dir'\n";
+        std::cout << "  clear          Clear the terminal screen\n";
+        std::cout << "  echo [args]    Display arguments to the terminal\n";
+        std::cout << "  whoami         Display the current username\n";
+        std::cout << "  set VAR=VALUE  Set an environment variable\n";
+        std::cout << "  unset VAR      Unset an environment variable\n";
+        std::cout << "  history        Show command history\n";
+        std::cout << "  search         Search command history by number\n";
+        std::cout << "  exit           Exit the shell\n";
+        continue;
+    }
+    else if(std::find(tokenslist.begin(), tokenslist.end(), "&&") != tokenslist.end() || 
+            std::find(tokenslist.begin(), tokenslist.end(), "||") != tokenslist.end()){
+        ExecuteCommandsWithSep(tokenslist);
+        continue;
+    }
+       
    else if ( tokenslist[0] == "echo"){
         for(size_t i = 1; i<    tokenslist.size(); ++i){
            std::string arg = tokenslist[i];
@@ -177,6 +306,10 @@ int main(){
     }
     continue;
     }
+    else if(std::find(tokenslist.begin(), tokenslist.end(), "<") != tokenslist.end() ||
+            std::find(tokenslist.begin(), tokenslist.end(), ">") != tokenslist.end()){
+        handleRedirections(tokenslist);
+    }
     else if( tokenslist[0] == "unset"){
         if(tokenslist.size() < 2){
             std::cerr<<"\033[31munset: missing variable name\033[0m"<<std::endl;
@@ -196,23 +329,7 @@ int main(){
         args.push_back(nullptr); // execvp needs null-terminated array
  
         // child process for execute
-        pid_t p_id = fork();
-
-        if(!p_id){
-            execvp(args[0], args.data());
-            perror("\033[31mexecvp failed\033[0m");
-            exit(1);
-        }
-        else if(p_id > 0){
-            wait(nullptr);
-        }
-        else {
-           perror("\033[31mexecvp failed\033[0m");
-        }
-        // free memory
-        for(size_t i = 0; i < args.size() - 1; ++i) {
-            delete [] args[i];
-        }
+        ExecuteCommand(args);
         args.clear();
         SaveToTheFile(history);
     }
