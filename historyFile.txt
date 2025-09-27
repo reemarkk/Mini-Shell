@@ -21,3 +21,5 @@ search
 grep main main.cpp
 hello>out.txt
 hello>historyFile.txt
+ls
+hello>out.txt
