@@ -33,3 +33,12 @@ The shell uses system calls like fork, execvp, wait, chdir, getcwd, setenv, unse
 
 Note: This is a minimal implementation. The shell currently supports only basic single commands and lacks features like command piping, redirection, and background execution. It is intended as a foundation for further improvements and learning. This shell is designed to work on **Unix-like** environments (Linux, macOS) and may not function correctly on **Windows without modification.**
 
+## Contributions
+
+Contributions are welcome! You can help by:  
+- Adding or improving built-in commands  
+- Implementing features like piping or redirection  
+- Fixing bugs or improving code readability  
+- Updating documentation  
+
+To contribute: fork the repo, create a branch, make changes, and open a Pull Request.
