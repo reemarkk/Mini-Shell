@@ -2,3 +2,4 @@ ls
 history
 serach
 aa
+ls

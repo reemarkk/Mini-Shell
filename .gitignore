@@ -1,0 +1,12 @@
+# VS Code settings
+.vscode/
+
+# Build output
+rpsgame
+*.o
+*.out
+*.dSYM/
+
+# Temporary files
+*.tmp
+*~
